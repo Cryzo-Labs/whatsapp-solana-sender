@@ -16,6 +16,8 @@ WhatsApp Solana Sender is a proof-of-concept application that demonstrates the i
 - **Dark Mode Aesthetic**: A premium, dark-themed UI modeled after popular messaging applications for a familiar user experience.
 - **Live Dashboard**: A real-time dashboard displaying wallet balance, public key, and transaction history.
 - **Interactive Feedback**: Visual cues for typing status, message delivery, and transaction confirmations.
+- **Fiat Conversion**: Real-time display of SOL balance in USD (Implemented).
+- **QR Code Integration**: Easily share your wallet address via QR code (Planned).
 
 ### Technical Capabilities
 - **Secure Key Management**: Local handling of cryptographic keys (demonstration mode).
@@ -102,22 +104,25 @@ Processes a user message.
 - Basic chat interface.
 - Devnet transaction support.
 - In-memory wallet management.
+- Real-time USD price conversion.
 
 ### Phase 2: Enhanced Security & Persistence
 - Integration with browser wallets (Phantom, Solflare).
 - Encrypted local storage for session persistence.
-- Transaction history export.
+- Transaction history export (CSV/PDF).
+- QR Code generation for receiving funds.
 
 ### Phase 3: Real-world Integration
 - WhatsApp Business API integration.
 - Mainnet support.
-- Contact book management.
-- QR code scanning for addresses.
+- Contact book management (Save friends/frequent contacts).
+- Voice command support ("Hey Bot, send 1 SOL").
 
 ### Phase 4: Advanced Features
-- SPL Token support (USDC, etc.).
-- NFT viewing and transfer.
+- SPL Token support (USDC, BONK, etc.).
+- NFT viewing and transfer gallery.
 - Multi-signature wallet support.
+- Fiat on-ramp integration.
 
 ## License
 

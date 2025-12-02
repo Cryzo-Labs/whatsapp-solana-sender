@@ -27,10 +27,30 @@ export function WalletDashboard({
     onRequestAirdrop,
     isLoading,
 }: WalletDashboardProps) {
+    const [solPrice, setSolPrice] = React.useState<number | null>(null);
+
+    React.useEffect(() => {
+        const fetchPrice = async () => {
+            try {
+                const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd");
+                const data = await res.json();
+                setSolPrice(data.solana.usd);
+            } catch (e) {
+                console.error("Failed to fetch SOL price", e);
+            }
+        };
+        fetchPrice();
+        // Refresh price every minute
+        const interval = setInterval(fetchPrice, 60000);
+        return () => clearInterval(interval);
+    }, []);
+
     const copyToClipboard = () => {
         navigator.clipboard.writeText(publicKey);
         // Could add toast here
     };
+
+    const usdBalance = solPrice && balance ? (balance * solPrice).toFixed(2) : "---";
 
     return (
         <div className="space-y-6 w-full max-w-md">
@@ -45,6 +65,9 @@ export function WalletDashboard({
                     <div className="flex flex-col gap-1 mb-6">
                         <span className="text-4xl font-bold text-white">
                             {balance !== null ? balance.toFixed(4) : "---"} <span className="text-whatsapp-accent text-xl">SOL</span>
+                        </span>
+                        <span className="text-sm text-whatsapp-text-secondary font-medium">
+                            ≈ ${usdBalance} USD
                         </span>
                         <div className="flex items-center gap-2 text-xs text-whatsapp-text-secondary bg-[#0b141a] p-2 rounded-md mt-2 font-mono break-all">
                             {publicKey || "Loading..."}
