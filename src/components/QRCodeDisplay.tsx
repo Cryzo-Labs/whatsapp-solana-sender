@@ -33,11 +33,10 @@ export function QRCodeDisplay() {
         };
 
         const interval = setInterval(() => {
+            if (status === "open") return;
             fetchStatus();
-            if (status !== "open") {
-                fetchQR();
-            }
-        }, 2000);
+            fetchQR();
+        }, 3000);
 
         return () => clearInterval(interval);
     }, [qrCode, status]);

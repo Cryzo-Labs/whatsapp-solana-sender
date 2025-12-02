@@ -1,7 +1,8 @@
-```typescript
+
 import React, { useState, useEffect } from "react";
 import { QRCodeDisplay } from "./components/QRCodeDisplay";
 import { WalletDashboard } from "./components/WalletDashboard";
+import { ContactBook } from "./components/ContactBook";
 import { motion } from "framer-motion";
 
 interface Transaction {
@@ -32,7 +33,7 @@ export function App() {
   useEffect(() => {
     fetchWallet();
     // Poll for wallet updates (since transactions happen via WhatsApp now)
-    const interval = setInterval(fetchWallet, 5000);
+    const interval = setInterval(fetchWallet, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -64,10 +65,10 @@ export function App() {
   return (
     <div className="min-h-screen bg-[#0b141a] text-whatsapp-text-primary p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
-        
+
         {/* Left Column: Dashboard */}
         <div className="lg:col-span-1 flex flex-col gap-6 order-2 lg:order-1">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
@@ -78,7 +79,7 @@ export function App() {
                 Send crypto directly from your WhatsApp.
               </p>
             </div>
-            
+
             <WalletDashboard
               publicKey={wallet.publicKey}
               balance={wallet.balance}
@@ -87,6 +88,10 @@ export function App() {
               onRequestAirdrop={handleAirdrop}
               isLoading={isLoading}
             />
+
+            <div className="mt-6">
+              <ContactBook />
+            </div>
 
             <div className="mt-8 p-4 bg-whatsapp-header rounded-lg border border-white/5 text-sm text-whatsapp-text-secondary">
               <h3 className="text-whatsapp-accent font-medium mb-2">How to use:</h3>
@@ -101,7 +106,7 @@ export function App() {
 
         {/* Right Column: QR Code / Status */}
         <div className="lg:col-span-2 flex items-center justify-center order-1 lg:order-2 h-[80vh]">
-           <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}

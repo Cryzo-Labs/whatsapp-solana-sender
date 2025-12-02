@@ -138,8 +138,39 @@ export function WalletDashboard({
 
             <Card className="bg-whatsapp-header border-white/10 text-whatsapp-text-primary shadow-xl">
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-whatsapp-text-secondary uppercase tracking-wider">
-                        Recent Activity
+                    <CardTitle className="text-sm font-medium text-whatsapp-text-secondary uppercase tracking-wider flex justify-between items-center">
+                        <span>Recent Activity</span>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 text-xs text-whatsapp-accent hover:text-whatsapp-accent/80 hover:bg-transparent p-0"
+                            onClick={() => {
+                                const headers = ["Signature", "Type", "Amount", "Timestamp"];
+                                const rows = transactions.map(tx => [
+                                    tx.signature,
+                                    tx.type,
+                                    tx.amount.toString(),
+                                    tx.timestamp.toISOString()
+                                ]);
+                                const csvContent = [
+                                    headers.join(","),
+                                    ...rows.map(row => row.join(","))
+                                ].join("\n");
+
+                                const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                                const link = document.createElement("a");
+                                const url = URL.createObjectURL(blob);
+                                link.setAttribute("href", url);
+                                link.setAttribute("download", `transactions_${new Date().toISOString().split('T')[0]}.csv`);
+                                link.style.visibility = 'hidden';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            }}
+                            disabled={transactions.length === 0}
+                        >
+                            Export CSV
+                        </Button>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
