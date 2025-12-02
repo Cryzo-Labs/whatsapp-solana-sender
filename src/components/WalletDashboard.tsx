@@ -1,7 +1,8 @@
 import React from "react";
-import { Copy, RefreshCw, Wallet, ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { Copy, RefreshCw, Wallet, ArrowUpRight, ArrowDownLeft, QrCode, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import QRCode from "qrcode";
 
 interface Transaction {
     signature: string;
@@ -28,6 +29,8 @@ export function WalletDashboard({
     isLoading,
 }: WalletDashboardProps) {
     const [solPrice, setSolPrice] = React.useState<number | null>(null);
+    const [showReceive, setShowReceive] = React.useState(false);
+    const [qrDataUrl, setQrDataUrl] = React.useState<string | null>(null);
 
     React.useEffect(() => {
         const fetchPrice = async () => {
@@ -40,21 +43,27 @@ export function WalletDashboard({
             }
         };
         fetchPrice();
-        // Refresh price every minute
         const interval = setInterval(fetchPrice, 60000);
         return () => clearInterval(interval);
     }, []);
 
+    React.useEffect(() => {
+        if (showReceive && publicKey) {
+            QRCode.toDataURL(publicKey)
+                .then(setQrDataUrl)
+                .catch(console.error);
+        }
+    }, [showReceive, publicKey]);
+
     const copyToClipboard = () => {
         navigator.clipboard.writeText(publicKey);
-        // Could add toast here
     };
 
     const usdBalance = solPrice && balance ? (balance * solPrice).toFixed(2) : "---";
 
     return (
         <div className="space-y-6 w-full max-w-md">
-            <Card className="bg-whatsapp-header border-white/10 text-whatsapp-text-primary shadow-xl">
+            <Card className="bg-whatsapp-header border-white/10 text-whatsapp-text-primary shadow-xl relative overflow-hidden">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-whatsapp-text-secondary uppercase tracking-wider flex justify-between items-center">
                         <span>Solana Wallet</span>
@@ -62,40 +71,68 @@ export function WalletDashboard({
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex flex-col gap-1 mb-6">
-                        <span className="text-4xl font-bold text-white">
-                            {balance !== null ? balance.toFixed(4) : "---"} <span className="text-whatsapp-accent text-xl">SOL</span>
-                        </span>
-                        <span className="text-sm text-whatsapp-text-secondary font-medium">
-                            ≈ ${usdBalance} USD
-                        </span>
-                        <div className="flex items-center gap-2 text-xs text-whatsapp-text-secondary bg-[#0b141a] p-2 rounded-md mt-2 font-mono break-all">
-                            {publicKey || "Loading..."}
-                            <button onClick={copyToClipboard} className="hover:text-white transition-colors">
-                                <Copy size={12} />
-                            </button>
+                    {showReceive ? (
+                        <div className="flex flex-col items-center justify-center py-4 animate-in fade-in zoom-in duration-200">
+                            <div className="absolute top-4 right-4">
+                                <Button variant="ghost" size="icon" onClick={() => setShowReceive(false)} className="h-8 w-8 text-whatsapp-text-secondary hover:text-white hover:bg-white/10">
+                                    <X size={18} />
+                                </Button>
+                            </div>
+                            <h3 className="text-white font-medium mb-4">Scan to Receive</h3>
+                            {qrDataUrl && (
+                                <div className="bg-white p-2 rounded-lg mb-4">
+                                    <img src={qrDataUrl} alt="Wallet QR" className="w-48 h-48" />
+                                </div>
+                            )}
+                            <p className="text-xs text-whatsapp-text-secondary text-center break-all max-w-[80%]">
+                                {publicKey}
+                            </p>
                         </div>
-                    </div>
+                    ) : (
+                        <>
+                            <div className="flex flex-col gap-1 mb-6">
+                                <span className="text-4xl font-bold text-white">
+                                    {balance !== null ? balance.toFixed(4) : "---"} <span className="text-whatsapp-accent text-xl">SOL</span>
+                                </span>
+                                <span className="text-sm text-whatsapp-text-secondary font-medium">
+                                    ≈ ${usdBalance} USD
+                                </span>
+                                <div className="flex items-center gap-2 text-xs text-whatsapp-text-secondary bg-[#0b141a] p-2 rounded-md mt-2 font-mono break-all">
+                                    {publicKey || "Loading..."}
+                                    <button onClick={copyToClipboard} className="hover:text-white transition-colors">
+                                        <Copy size={12} />
+                                    </button>
+                                </div>
+                            </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <Button
-                            variant="outline"
-                            className="bg-[#0b141a] border-white/10 hover:bg-[#0b141a]/80 text-whatsapp-accent hover:text-whatsapp-accent"
-                            onClick={onRefresh}
-                            disabled={isLoading}
-                        >
-                            <RefreshCw size={16} className={`mr-2 ${isLoading ? "animate-spin" : ""}`} />
-                            Refresh
-                        </Button>
-                        <Button
-                            className="bg-whatsapp-accent hover:bg-whatsapp-accent/90 text-white border-none"
-                            onClick={onRequestAirdrop}
-                            disabled={isLoading}
-                        >
-                            <ArrowDownLeft size={16} className="mr-2" />
-                            Airdrop
-                        </Button>
-                    </div>
+                            <div className="grid grid-cols-3 gap-2">
+                                <Button
+                                    variant="outline"
+                                    className="bg-[#0b141a] border-white/10 hover:bg-[#0b141a]/80 text-whatsapp-accent hover:text-whatsapp-accent"
+                                    onClick={onRefresh}
+                                    disabled={isLoading}
+                                >
+                                    <RefreshCw size={16} className={`mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                                    Refresh
+                                </Button>
+                                <Button
+                                    className="bg-whatsapp-accent hover:bg-whatsapp-accent/90 text-white border-none"
+                                    onClick={onRequestAirdrop}
+                                    disabled={isLoading}
+                                >
+                                    <ArrowDownLeft size={16} className="mr-2" />
+                                    Airdrop
+                                </Button>
+                                <Button
+                                    className="bg-[#202c33] hover:bg-[#2a3942] text-white border border-white/10"
+                                    onClick={() => setShowReceive(true)}
+                                >
+                                    <QrCode size={16} className="mr-2" />
+                                    Receive
+                                </Button>
+                            </div>
+                        </>
+                    )}
                 </CardContent>
             </Card>
 

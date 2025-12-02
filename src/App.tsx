@@ -1,15 +1,8 @@
+```typescript
 import React, { useState, useEffect } from "react";
-import { WhatsAppSimulator } from "./components/WhatsAppSimulator";
+import { QRCodeDisplay } from "./components/QRCodeDisplay";
 import { WalletDashboard } from "./components/WalletDashboard";
 import { motion } from "framer-motion";
-
-interface Message {
-  id: string;
-  text: string;
-  sender: "user" | "bot";
-  timestamp: Date;
-  status: "sent" | "delivered" | "read";
-}
 
 interface Transaction {
   signature: string;
@@ -19,16 +12,6 @@ interface Transaction {
 }
 
 export function App() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      text: "Hello! 👋 I'm your Solana Assistant. You can ask me to check your balance, show your address, or send SOL to a friend.",
-      sender: "bot",
-      timestamp: new Date(),
-      status: "read",
-    },
-  ]);
-  const [isTyping, setIsTyping] = useState(false);
   const [wallet, setWallet] = useState({ publicKey: "", balance: 0 });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -48,73 +31,10 @@ export function App() {
 
   useEffect(() => {
     fetchWallet();
+    // Poll for wallet updates (since transactions happen via WhatsApp now)
+    const interval = setInterval(fetchWallet, 5000);
+    return () => clearInterval(interval);
   }, []);
-
-  const handleSendMessage = async (text: string) => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text,
-      sender: "user",
-      timestamp: new Date(),
-      status: "sent",
-    };
-
-    setMessages((prev) => [...prev, newMessage]);
-    setIsTyping(true);
-
-    // Simulate network delay for realism
-    setTimeout(() => {
-      setMessages(prev => prev.map(m => m.id === newMessage.id ? { ...m, status: "delivered" } : m));
-    }, 1000);
-
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
-      });
-      const data = await res.json();
-
-      // Simulate reading delay
-      setTimeout(() => {
-        setMessages(prev => prev.map(m => m.id === newMessage.id ? { ...m, status: "read" } : m));
-      }, 1500);
-
-      // Bot response delay
-      setTimeout(() => {
-        setIsTyping(false);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            text: data.text,
-            sender: "bot",
-            timestamp: new Date(),
-            status: "read",
-          },
-        ]);
-
-        if (data.action) {
-          fetchWallet();
-          if (data.action.type === "sent") {
-            setTransactions((prev) => [
-              {
-                signature: data.action.signature,
-                type: "sent",
-                amount: data.action.amount,
-                timestamp: new Date(),
-              },
-              ...prev,
-            ]);
-          }
-        }
-      }, 2000);
-
-    } catch (e) {
-      setIsTyping(false);
-      console.error("Chat error", e);
-    }
-  };
 
   const handleAirdrop = async () => {
     setIsLoading(true);
@@ -144,10 +64,10 @@ export function App() {
   return (
     <div className="min-h-screen bg-[#0b141a] text-whatsapp-text-primary p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
-
+        
         {/* Left Column: Dashboard */}
         <div className="lg:col-span-1 flex flex-col gap-6 order-2 lg:order-1">
-          <motion.div
+          <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
@@ -155,10 +75,10 @@ export function App() {
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-white mb-2">WhatsApp Solana</h1>
               <p className="text-whatsapp-text-secondary">
-                Send crypto as easily as sending a message.
+                Send crypto directly from your WhatsApp.
               </p>
             </div>
-
+            
             <WalletDashboard
               publicKey={wallet.publicKey}
               balance={wallet.balance}
@@ -171,27 +91,23 @@ export function App() {
             <div className="mt-8 p-4 bg-whatsapp-header rounded-lg border border-white/5 text-sm text-whatsapp-text-secondary">
               <h3 className="text-whatsapp-accent font-medium mb-2">How to use:</h3>
               <ul className="space-y-2 list-disc list-inside">
-                <li>Request an Airdrop to get Devnet SOL.</li>
-                <li>Type <span className="text-white font-mono">"Balance"</span> to check funds.</li>
-                <li>Type <span className="text-white font-mono">"Send 0.1 to [address]"</span> to transfer.</li>
+                <li>Link your WhatsApp using the QR code.</li>
+                <li>Send a message to <b>Yourself</b> (Note to Self).</li>
+                <li>Type <span className="text-white font-mono">"Balance"</span> or <span className="text-white font-mono">"Send 0.1 to [addr]"</span>.</li>
               </ul>
             </div>
           </motion.div>
         </div>
 
-        {/* Right Column: Simulator */}
+        {/* Right Column: QR Code / Status */}
         <div className="lg:col-span-2 flex items-center justify-center order-1 lg:order-2 h-[80vh]">
-          <motion.div
+           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="w-full"
+            className="w-full max-w-md"
           >
-            <WhatsAppSimulator
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              isTyping={isTyping}
-            />
+            <QRCodeDisplay />
           </motion.div>
         </div>
 
