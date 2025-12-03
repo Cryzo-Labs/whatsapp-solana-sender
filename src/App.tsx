@@ -20,11 +20,24 @@ export function App() {
   const fetchWallet = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/wallet");
-      const data = await res.json();
-      setWallet(data);
+      const [walletRes, txRes] = await Promise.all([
+        fetch("/api/wallet"),
+        fetch("/api/transactions")
+      ]);
+
+      const walletData = await walletRes.json();
+      const txData = await txRes.json();
+
+      setWallet(walletData);
+
+      // Convert timestamp strings to Date objects
+      const parsedTxs = txData.map((tx: any) => ({
+        ...tx,
+        timestamp: new Date(tx.timestamp)
+      }));
+      setTransactions(parsedTxs);
     } catch (e) {
-      console.error("Failed to fetch wallet", e);
+      console.error("Failed to fetch wallet data", e);
     } finally {
       setIsLoading(false);
     }
@@ -33,7 +46,7 @@ export function App() {
   useEffect(() => {
     fetchWallet();
     // Poll for wallet updates (since transactions happen via WhatsApp now)
-    const interval = setInterval(fetchWallet, 10000);
+    const interval = setInterval(fetchWallet, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -43,17 +56,8 @@ export function App() {
       const res = await fetch("/api/airdrop", { method: "POST" });
       const data = await res.json();
       if (data.signature) {
-        setTransactions((prev) => [
-          {
-            signature: data.signature,
-            type: "airdrop",
-            amount: 1,
-            timestamp: new Date(),
-          },
-          ...prev,
-        ]);
-        // Wait a bit for confirmation before refreshing balance
-        setTimeout(fetchWallet, 2000);
+        // Refresh immediately to see the new transaction
+        setTimeout(fetchWallet, 1000);
       }
     } catch (e) {
       console.error("Airdrop failed", e);

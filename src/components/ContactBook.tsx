@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Trash2, User, Save } from "lucide-react";
+import { Plus, Trash2, User, Save, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,40 +15,49 @@ export function ContactBook() {
     const [newName, setNewName] = useState("");
     const [newAddress, setNewAddress] = useState("");
     const [isAdding, setIsAdding] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const fetchContacts = async () => {
+        try {
+            const res = await fetch("/api/contacts");
+            const data = await res.json();
+            setContacts(data);
+        } catch (e) {
+            console.error("Failed to fetch contacts", e);
+        }
+    };
 
     useEffect(() => {
-        const saved = localStorage.getItem("whatsapp-solana-contacts");
-        if (saved) {
-            try {
-                setContacts(JSON.parse(saved));
-            } catch (e) {
-                console.error("Failed to load contacts", e);
-            }
-        }
+        fetchContacts();
     }, []);
 
-    const saveContacts = (newContacts: Contact[]) => {
-        setContacts(newContacts);
-        localStorage.setItem("whatsapp-solana-contacts", JSON.stringify(newContacts));
-    };
-
-    const handleAdd = () => {
+    const handleAdd = async () => {
         if (!newName || !newAddress) return;
-
-        const newContact: Contact = {
-            id: crypto.randomUUID(),
-            name: newName,
-            address: newAddress
-        };
-
-        saveContacts([...contacts, newContact]);
-        setNewName("");
-        setNewAddress("");
-        setIsAdding(false);
+        setIsLoading(true);
+        try {
+            await fetch("/api/contacts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: newName, address: newAddress })
+            });
+            await fetchContacts();
+            setNewName("");
+            setNewAddress("");
+            setIsAdding(false);
+        } catch (e) {
+            console.error("Failed to add contact", e);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleDelete = (id: string) => {
-        saveContacts(contacts.filter(c => c.id !== id));
+    const handleDelete = async (id: string) => {
+        try {
+            await fetch(`/api/contacts?id=${id}`, { method: "DELETE" });
+            setContacts(contacts.filter(c => c.id !== id));
+        } catch (e) {
+            console.error("Failed to delete contact", e);
+        }
     };
 
     return (
@@ -95,9 +104,9 @@ export function ContactBook() {
                                 size="sm"
                                 onClick={handleAdd}
                                 className="h-7 text-xs bg-whatsapp-accent hover:bg-whatsapp-accent/90 text-white"
-                                disabled={!newName || !newAddress}
+                                disabled={!newName || !newAddress || isLoading}
                             >
-                                <Save size={12} className="mr-1" />
+                                {isLoading ? <Loader2 size={12} className="mr-1 animate-spin" /> : <Save size={12} className="mr-1" />}
                                 Save
                             </Button>
                         </div>
